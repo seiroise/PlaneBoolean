@@ -94,6 +94,23 @@ public class Polygon2 {
 	}
 
 	/// <summary>
+	/// 辺の向きを反転させる
+	/// </summary>
+	public Edge2[] ReverseEdges() {
+
+		//下準備
+		int len = vertices.Length;
+		Edge2[] edges = new Edge2[len];
+
+		//処理
+		for (int i = 0; i < len; ++i) {
+			edges[i] = new Edge2(vertices[i], vertices[(i + len - 1) % len]);
+		}
+
+		return edges;
+	}
+
+	/// <summary>
 	/// 辺をy座標値で分割
 	/// 座標値は上から下にソートしてあること
 	/// </summary>
@@ -101,10 +118,11 @@ public class Polygon2 {
 
 		//下準備
 		List<Edge2> divEdges = new List<Edge2>();	//分割された辺
-		
+
 		//処理
-		foreach(var e in edges) {
+		foreach (var e in edges) {
 			List<Edge2> temp = DivisionEdge(e, divisions);
+			if (temp == null) continue;
 			divEdges.AddRange(temp);
 		}
 
@@ -113,9 +131,20 @@ public class Polygon2 {
 
 	/// <summary>
 	/// 辺をy座標値で分割
-	/// 分割座標値は上から下にソートしてあること
+	/// 座標値は上から下にソートしてあること
+	/// </summary>
+	public List<Edge2> DivisionEdges(float[] divisions) {
+		return DivisionEdges(this.edges, divisions);
+	}
+
+	/// <summary>
+	/// 辺をy座標値で分割
+	/// 座標値は上から下にソートしてあること
 	/// </summary>
 	public List<Edge2> DivisionEdge(Edge2 edge, float[] divisions) {
+		
+		//平行な場合はそもそも分割できない
+		if (edge.deltaDir == Edge2.Direction.Horizontal) return null;
 		
 		//下準備
 		List<Edge2> edges = new List<Edge2>();
@@ -125,10 +154,11 @@ public class Polygon2 {
 		for (int i = 0; i < divisions.Length; ++i) {
 			int contains = targetEdge.ContainsY(divisions[i]);
 			if (contains == 1) {
-				Edge2 a, b;
-				if (targetEdge.Division(divisions[i], out a, out b)) {
-					edges.Add(a);
-					targetEdge = b;
+				//上から下へ分割
+				Edge2 top, bottom;
+				if (targetEdge.Division(divisions[i], out top, out bottom)) {
+					edges.Add(top);
+					targetEdge = bottom;
 				}
 			}
 		}
@@ -164,15 +194,63 @@ public class Polygon2 {
 			foreach (var f in bEdges) {
 				if (!e.Intersection(f, out p)) continue;
 				if (divisionSet.Contains(p.y)) continue;
-				Debug.Log("Intersection : " + p.y);
 				divisionSet.Add(p.y);
 			}
 		}
 
-		//配列にしてソート
+		//配列にしてソート(大きい順)
 		float[] divisions = divisionSet.ToArray();
-		Array.Sort(divisions);
+		Array.Sort(divisions, (x, y) => {
+			if (x > y) return -1;
+			else if (x < y) return 1;
+			else return 0;
+		});
+
 		return divisions;
+	}
+
+	/// <summary>
+	/// 分割値毎に辺を集める
+	/// </summary>
+	public List<Edge2>[] CollectEdges(List<Edge2> edges, float[] divisions) {
+
+		if (edges == null || edges.Count == 0) return null;
+
+		//下準備
+		int edgeLen = edges.Count;
+		int divLen = divisions.Length - 1;
+		Edge2 edge;
+		List<Edge2>[] divEdges = new List<Edge2>[divLen];
+
+		//処理
+		for (int i = 0; i < edgeLen; ++i) {
+			edge = edges[i];
+			for (int j = 0; j < divLen; ++j) {
+				if (edge.top == divisions[j]) {
+					if (divEdges[j] == null) divEdges[j] = new List<Edge2>();
+					divEdges[j].Add(edge);
+					break;
+				}
+			}
+		}
+
+		//辺を左順にソートしカウンタを載せる
+		for (int i = 0; i < divLen; ++i) {
+			List<Edge2> e = divEdges[i];
+			if (e == null) continue;
+			e.Sort();
+			int counter = 0;
+			foreach (var f in e) {
+				if (f.deltaDir == Edge2.Direction.Upward) {
+					counter++;
+				} else {
+					counter--;
+				}
+				f.counter = counter;
+			}
+		}
+
+		return divEdges;
 	}
 
 	#endregion
@@ -180,16 +258,167 @@ public class Polygon2 {
 	#region BooleanFunction
 
 	/// <summary>
-	/// 和
+	/// 論理和
 	/// </summary>
-	public void Or(Polygon2 a) {
+	public Mesh Or(Polygon2 a) {
 
 		//分割値を求める
 		float[] divisions = GetDivisions(this.edges, a.edges);
-		Debug.Log("Divisions");
-		foreach (var e in divisions) {
-			Debug.Log(e);
+		//辺の分割
+		List<Edge2> divEdges = DivisionEdges(divisions);
+		List<Edge2> aDiv = a.DivisionEdges(divisions);
+		divEdges.AddRange(aDiv);
+
+		//分割した辺を分割値毎にまとめ左順にソート
+		List<Edge2>[] collectEdges = CollectEdges(divEdges, divisions);
+
+		//メッシュ化
+		Mesh mesh = new Mesh();
+		List<Vector3> vertices = new List<Vector3>();
+		List<int> indices = new List<int>();
+		int index = 0;
+
+		//左から順に上向きのカウンタ1の辺と下向きのカウンタ0の辺をペアとする
+		foreach (var edges in collectEdges) {
+			Edge2 edge = null;
+			foreach (var e in edges) {
+				if (edge == null) {
+					if (e.deltaDir == Edge2.Direction.Upward && e.counter == 1) {
+						edge = e;
+					}
+				} else {
+					if (e.deltaDir == Edge2.Direction.Downward && e.counter == 0) {
+						if (edge.from == e.to) {
+							//Triangleの作成
+							vertices.Add(edge.from);
+							vertices.Add(edge.to);
+							vertices.Add(e.from);
+
+							indices.Add(index++);
+							indices.Add(index++);
+							indices.Add(index++);
+						}else if(edge.to == e.from) {
+							//Triangleの作成
+							vertices.Add(edge.from);
+							vertices.Add(edge.to);
+							vertices.Add(e.to);
+
+							indices.Add(index++);
+							indices.Add(index++);
+							indices.Add(index++);
+						} else {
+							//Quadの作成
+							vertices.Add(edge.from);
+							vertices.Add(edge.to);
+							vertices.Add(e.from);
+							vertices.Add(e.to);
+
+							indices.Add(index);
+							indices.Add(index + 1);
+							indices.Add(index + 2);
+
+							indices.Add(index);
+							indices.Add(index + 2);
+							indices.Add(index + 3);
+
+							index += 4;
+						}
+						
+						edge = null;
+					}
+				}
+			}
 		}
+
+		mesh.SetVertices(vertices);
+		mesh.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
+
+		mesh.RecalculateBounds();
+		mesh.RecalculateNormals();
+
+		return mesh;
+	}
+
+	/// <summary>
+	/// 論理否定
+	/// </summary>
+	public Mesh Not(Polygon2 a) {
+
+		//分割値を求める
+		float[] divisions = GetDivisions(this.edges, a.edges);
+		//辺の分割
+		List<Edge2> divEdges = DivisionEdges(divisions);
+		List<Edge2> aDiv = a.DivisionEdges(a.ReverseEdges(), divisions);	//辺を反転
+		divEdges.AddRange(aDiv);
+
+		//分割した辺を分割値毎にまとめ左順にソート
+		List<Edge2>[] collectEdges = CollectEdges(divEdges, divisions);
+
+		//メッシュ化
+		Mesh mesh = new Mesh();
+		List<Vector3> vertices = new List<Vector3>();
+		List<int> indices = new List<int>();
+		int index = 0;
+
+		//左から順に上向きのカウンタ1の辺と下向きのカウンタ0の辺をペアとする
+		foreach (var edges in collectEdges) {
+			Edge2 edge = null;
+			foreach (var e in edges) {
+				if (edge == null) {
+					if (e.deltaDir == Edge2.Direction.Upward && e.counter == 1) {
+						edge = e;
+					}
+				} else {
+					if (e.deltaDir == Edge2.Direction.Downward && e.counter == 0) {
+						if (edge.from == e.to) {
+							//Triangleの作成
+							vertices.Add(edge.from);
+							vertices.Add(edge.to);
+							vertices.Add(e.from);
+
+							indices.Add(index++);
+							indices.Add(index++);
+							indices.Add(index++);
+						} else if (edge.to == e.from) {
+							//Triangleの作成
+							vertices.Add(edge.from);
+							vertices.Add(edge.to);
+							vertices.Add(e.to);
+
+							indices.Add(index++);
+							indices.Add(index++);
+							indices.Add(index++);
+						} else {
+							//Quadの作成
+							vertices.Add(edge.from);
+							vertices.Add(edge.to);
+							vertices.Add(e.from);
+							vertices.Add(e.to);
+
+							indices.Add(index);
+							indices.Add(index + 1);
+							indices.Add(index + 2);
+
+							indices.Add(index);
+							indices.Add(index + 2);
+							indices.Add(index + 3);
+
+							index += 4;
+						}
+
+						edge = null;
+					}
+				}
+			}
+		}
+
+		mesh.SetVertices(vertices);
+		mesh.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
+
+		mesh.RecalculateBounds();
+		mesh.RecalculateNormals();
+
+		return mesh;
 	}
 
 	#endregion
