@@ -13,6 +13,8 @@ public class BooleanWorld : MonoBehaviour {
 	//取り敢えずボロノイ図から作ってみる
 	private Voronoi voronoi;
 
+	public BooleanObject objectPrefab;
+
 	#region UnityEvent
 
 	private void Start() {
@@ -49,7 +51,8 @@ public class BooleanWorld : MonoBehaviour {
 		//論理演算可能なポリゴンに変換
 		for (int i = 0; i < regions.Count; ++i) {
 			Vector2[] vertices = new Vector2[regions[i].Count];
-			Polygon2 p = new Polygon2(vertices);
+			//ブーリアンオブジェクト?の生成
+
 		}
 
 	}
