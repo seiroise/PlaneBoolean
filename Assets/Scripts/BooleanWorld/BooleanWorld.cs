@@ -30,31 +30,46 @@ public class BooleanWorld : MonoBehaviour {
 	/// </summary>
 	private void GenerateWorld() {
 
-		Rect plotRect = new Rect(-5f, -5f, 10f, 10f);
+		float size = 20f;
 
-		//適当に頂点を追加
-		List<Vector2f> inputVertices = new List<Vector2f>();
+		Rect plotRect = new Rect(-size * 0.5f, -size * 0.5f, size, size);
+
+		//適当にサイトを作成
+		List<Vector2f> sites = new List<Vector2f>();
 		int count = 10;
 		for (int i = 0; i < count; ++i) {
-			inputVertices.Add(new Vector2f(
+			sites.Add(new Vector2f(
 				Random.Range(plotRect.xMin, plotRect.xMax),
 				Random.Range(plotRect.yMin, plotRect.yMax)
 			));
 		}
 
 		//ボロノイ図の作成
-		voronoi = new Voronoi(inputVertices, new Rectf(plotRect.xMin, plotRect.yMin, plotRect.width, plotRect.height));
+		voronoi = new Voronoi(sites, new Rectf(plotRect.xMin, plotRect.yMin, plotRect.width, plotRect.height));
 
 		//生成した範囲を取得
 		List<List<Vector2f>> regions = voronoi.Regions();
 
 		//論理演算可能なポリゴンに変換
 		for (int i = 0; i < regions.Count; ++i) {
-			Vector2[] vertices = new Vector2[regions[i].Count];
+			List<Vector2f> r = regions[i];
+			Vector2[] vertices = new Vector2[r.Count];
+			Vector2 site = new Vector2(sites[i].x, sites[i].y);
+
+			for (int j = 0; j < vertices.Length; ++j) vertices[j] = new Vector2(r[j].x, r[j].y);
 			//ブーリアンオブジェクト?の生成
-
+			InstantiateBooleanObject(vertices);
 		}
+	}
 
+	/// <summary>
+	/// ブーリアンオブジェクトの生成
+	/// </summary>
+	private BooleanObject InstantiateBooleanObject(Vector2[] vertices) {
+		BooleanObject obj = Instantiate<BooleanObject>(objectPrefab);
+		obj.SetVertices(vertices);
+		obj.transform.SetParent(transform, false);
+		return obj;
 	}
 
 	#endregion

@@ -13,9 +13,13 @@ public class Polygon2 {
 	public Vector2[] vertices;	//頂点リスト
 	public Edge2[] edges;		//辺リスト
 
+	public Vector2 offset;
+
 	#region Constructors
 
 	public Polygon2(Vector2[] vertices) {
+
+		offset = Vector2.zero;
 
 		//エラーチェック
 		if (vertices == null || vertices.Length < 1) return;
@@ -65,10 +69,10 @@ public class Polygon2 {
 
 		//回り方の判定
 		if (sumTheta < -Mathf.PI + 0.001f) {
-			Debug.Log(sumTheta + " : CW");
+			//Debug.Log(sumTheta + " : CW");
 			return true;
 		} else if (sumTheta > Mathf.PI - 0.001f) {
-			Debug.Log(sumTheta + " : CCW");
+			//Debug.Log(sumTheta + " : CCW");
 			return false;
 		}
 
@@ -285,7 +289,7 @@ public class Polygon2 {
 	public Mesh ToMesh() {
 
 		//辺の分割
-		float[] divisions = GetDivisions(this.edges, a.edges);
+		float[] divisions = GetDivisions();
 		List<Edge2> divEdges = DivisionEdges(divisions);
 
 		//分割した辺を分割値毎にまとめ左順にソート
@@ -311,9 +315,9 @@ public class Polygon2 {
 							vertices.Add(edge.to);
 							vertices.Add(e.from);
 
-							indices.Add(++index);
-							indices.Add(++index);
-							indices.Add(++index);
+							indices.Add(index++);
+							indices.Add(index++);
+							indices.Add(index++);
 
 						}else if(edge.to == e.from) {
 							//Triangleの作成
@@ -321,9 +325,9 @@ public class Polygon2 {
 							vertices.Add(edge.to);
 							vertices.Add(e.to);
 
-							indices.Add(++index);
-							indices.Add(++index);
-							indices.Add(++index);
+							indices.Add(index++);
+							indices.Add(index++);
+							indices.Add(index++);
 
 						} else {
 							//Quadの作成
@@ -357,6 +361,31 @@ public class Polygon2 {
 		mesh.RecalculateNormals();
 
 		return mesh;
+	}
+
+	/// <summary>
+	/// 指定したアンカーから拡大縮小を行う
+	/// </summary>
+	public void Scale(Vector2 anchor, float scaling) {
+		//変換行列でできたらいいのになぁ
+		for (int i = 0; i < vertices.Length; ++i) {
+			vertices[i] = ((vertices[i] - anchor) * scaling) + anchor;
+		}
+		//辺の作成
+		edges = CreateEdges(vertices);
+	}
+
+	/// <summary>
+	/// 指定した移動量の分だけ移動させる
+	/// </summary>
+	public void Translate(Vector2 point) {
+		//変換行列でできたらいいね
+		Vector2 move = point - offset;
+		for (int i = 0; i < vertices.Length; ++i) {
+			vertices[i] += move;
+		}
+		//辺の作成
+		edges = CreateEdges(vertices);
 	}
 
 	#endregion
@@ -410,6 +439,7 @@ public class Polygon2 {
 							vertices.Add(e.to);
 						}
 						edge = null;
+						divPolygons.Add(vertices);
 					}
 				}
 			}
@@ -438,6 +468,7 @@ public class Polygon2 {
 
 		//左から順に上向きのカウンタ1の辺と下向きのカウンタ0の辺をペアとする
 		foreach (var edges in collectEdges) {
+			if (edges == null) continue;
 			Edge2 edge = null;
 			foreach (var e in edges) {
 				if (edge == null) {
@@ -465,6 +496,7 @@ public class Polygon2 {
 							vertices.Add(e.to);
 						}
 						edge = null;
+						divPolygons.Add(vertices);
 					}
 				}
 			}
