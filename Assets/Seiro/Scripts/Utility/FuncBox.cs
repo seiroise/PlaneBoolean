@@ -18,6 +18,13 @@ namespace Seiro.Scripts.Utility {
 			return cam.ScreenToWorldPoint(mousePos);
 		}
 
+		/// <summary>
+		/// メインカメラからワールド座標に変換したマウス座標を取得する
+		/// </summary>
+		public static Vector3 GetMousePosition() {
+			return GetMousePosition(Camera.main);
+		}
+
 		#endregion
 
 		#region Random
