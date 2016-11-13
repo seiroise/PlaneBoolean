@@ -43,10 +43,19 @@ namespace Scripts.RBTree {
 		private Node smallest;		//最も小さいノード
 		private Node biggest;		//最も大きいノード
 
+		private IComparer<K> comparator;	//比較子
+
 		#region Constructor
 
 		public RBTree() {
 			this.root = null;
+			this.smallest = null;
+			this.biggest = null;
+			this.comparator = null;
+		}
+
+		public RBTree(IComparer<K> comparator) : this(){
+			this.comparator = comparator;
 		}
 
 		#endregion
@@ -59,7 +68,7 @@ namespace Scripts.RBTree {
 		public bool ContainsKey(K key) {
 			Node t = root;
 			while (t != null) {
-				int com = key.CompareTo(t.key);
+				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
 				if (com < 0) t = t.lst;
 				else if (com > 0) t = t.rst;
 				else return true;
@@ -73,12 +82,22 @@ namespace Scripts.RBTree {
 		public Node GetNode(K key) {
 			Node t = root;
 			while (t != null) {
-				int com = key.CompareTo(t.key);
+				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
 				if (com < 0) t = t.lst;
 				else if (com > 0) t = t.rst;
 				else return t;
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// 最も小さい要素を取り出す。(同時に削除
+		/// </summary>
+		public K PopSmallest() {
+			if(smallest == null) return default(K);
+			K key = smallest.key;
+			Delete(smallest.key);
+			return key;
 		}
 
 		/// <summary>
@@ -185,7 +204,7 @@ namespace Scripts.RBTree {
 				//nullなら赤ノードを返す
 				return CreateNode(key, parent);
 			} else {
-				int com = key.CompareTo(t.key);
+				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
 				if (com < 0) {
 					//左(小さい方)に進む
 					t.lst = Insert(t.lst, t, key);
@@ -266,7 +285,7 @@ namespace Scripts.RBTree {
 			Node n = t.parent;
 			int com;
 			while (n != null) {
-				com = n.key.CompareTo(t.key);
+				com = comparator == null ? n.key.CompareTo(t.key) : comparator.Compare(n.key, t.key);
 				if (com < 0) {
 					//前後関係の構築
 					t.prev = n;
@@ -299,7 +318,7 @@ namespace Scripts.RBTree {
 			Node n = t.parent;
 			int com;
 			while (n != null) {
-				com = n.key.CompareTo(t.key);
+				com = comparator == null ? n.key.CompareTo(t.key) : comparator.Compare(n.key, t.key);
 				if (com > 0) {
 					//前後関係の構築
 					t.next = n;
@@ -342,41 +361,44 @@ namespace Scripts.RBTree {
 			if (t == null) {
 				aux.change = false;
 				return null;
-			} else if (key.CompareTo(t.key) < 0) {
-				//左(小さい方)に進む
-				t.lst = Delete(t.lst, t, key, aux);
-				return BalanceL(t, aux);
-			} else if (key.CompareTo(t.key) > 0) {
-				//右(大きい方)に進む
-				t.rst = Delete(t.rst, t, key, aux);
-				return BalanceR(t, aux);
 			} else {
-				if (t.lst == null) {
-					//左端
-					switch (t.color) {
-						case RBColor.R:
-							aux.change = false;
-							break;
-						case RBColor.B:
-							//パス上の黒の数が変わるので修正フラグを立てる
-							aux.change = true;
-							break;
-					}
-					//親子関係
-					if(t.rst != null) {
-						t.rst.parent = t.parent;
-					}
-					//前後関係
-					SetPrevNextAtDeleted(t);
-					//右部分木を昇格する
-					return t.rst;
-				} else {
-					//前後関係の設定
-					SetPrevNextAtDeleted(t);
-					//左部分木の最大値で置き換える
-					t.lst = DeleteMax(t.lst, aux);
-					t.key = aux.lmax;
+				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
+				if (key.CompareTo(t.key) < com) {
+					//左(小さい方)に進む
+					t.lst = Delete(t.lst, t, key, aux);
 					return BalanceL(t, aux);
+				} else if (key.CompareTo(t.key) > com) {
+					//右(大きい方)に進む
+					t.rst = Delete(t.rst, t, key, aux);
+					return BalanceR(t, aux);
+				} else {
+					if (t.lst == null) {
+						//左端
+						switch (t.color) {
+							case RBColor.R:
+								aux.change = false;
+								break;
+							case RBColor.B:
+								//パス上の黒の数が変わるので修正フラグを立てる
+								aux.change = true;
+								break;
+						}
+						//親子関係
+						if (t.rst != null) {
+							t.rst.parent = t.parent;
+						}
+						//前後関係
+						SetPrevNextAtDeleted(t);
+						//右部分木を昇格する
+						return t.rst;
+					} else {
+						//前後関係の設定
+						SetPrevNextAtDeleted(t);
+						//左部分木の最大値で置き換える
+						t.lst = DeleteMax(t.lst, aux);
+						t.key = aux.lmax;
+						return BalanceL(t, aux);
+					}
 				}
 			}
 		}

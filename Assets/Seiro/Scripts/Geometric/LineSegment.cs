@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Seiro.Scripts.Geometric {
 
 	/// <summary>
 	/// 二次元線分
 	/// </summary>
-	public class LineSegment {
+	public class LineSegment : IComparable<LineSegment> {
 		public Vector2 p1;
 		public Vector2 p2;
 
@@ -81,23 +83,32 @@ namespace Seiro.Scripts.Geometric {
 		/// <summary>
 		/// 二次元直線との交点を求める
 		/// </summary>
-		public bool GetIntersectionPoint(Line l, ref Vector2 p) {
+		public bool GetIntersectionPoint(Line l, out Vector2 p) {
+			p = Vector2.zero;
 			if(!Intersects(l)) {
 				return false;   //交差しない場合はfalseを返す
 			}
-			return l.GetIntersectionPoint(ToLine(), ref p);
+			return l.GetIntersectionPoint(ToLine(), out p);
 		}
 
 		/// <summary>
 		/// 二次元線分との交点を求める
 		/// </summary>
-		public bool GetIntersectionPoint(LineSegment s, ref Vector2 p) {
+		public bool GetIntersectionPoint(LineSegment s, out Vector2 p) {
+			p = Vector2.zero;
 			if(!Intersects(s)) {
 				return false;   //交差しない場合はfalseを返す
 			}
-			return s.ToLine().GetIntersectionPoint(ToLine(), ref p);
+			return s.ToLine().GetIntersectionPoint(ToLine(), out p);
 		}
 
 		#endregion
+
+		/// <summary>
+		/// IComparableの実装
+		/// </summary>
+		public int CompareTo(LineSegment other) {
+			return 0;
+		}
 	}
 }

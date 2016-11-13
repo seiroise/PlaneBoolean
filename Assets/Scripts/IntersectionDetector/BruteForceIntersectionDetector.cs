@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace PlaneBoolean1 {
+namespace IntersectionDetector {
 
 	/// <summary>
 	/// 総当り交差検出
 	/// </summary>
-	public class BruteForceIntersectionDetector : IntersectionDetector {
+	public class BruteForceIntersectionDetector : IIntersectionDetector {
 
 		public List<Intersection> Execute(List<LineSegment> segments) {
 			List<Intersection> result = new List<Intersection>();

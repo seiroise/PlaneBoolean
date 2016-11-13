@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace PlaneBoolean1 {
+namespace IntersectionDetector {
 
 	/// <summary>
 	/// 線分の交差を表現
