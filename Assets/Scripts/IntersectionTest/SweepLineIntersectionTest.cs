@@ -14,6 +14,7 @@ namespace IntersectionTest {
 	[RequireComponent(typeof(ChainLineFactory))]
 	public class SweepLineIntersectionTest : MonoBehaviour {
 
+		public int sample = 100;
 		private PlaneSweepIntersectionDetector detector;
 		private ChainLineFactory lineFactory;
 
@@ -35,11 +36,10 @@ namespace IntersectionTest {
 		/// </summary>
 		private void Test() {
 
-			int samples = 100;	//サンプル数
 			List<LineSegment> segments = new List<LineSegment>();
-			float area = 10f;
+			float area = 5f;
 
-			for(int i = 0; i < samples; ++i) {
+			for(int i = 0; i < sample; ++i) {
 				segments.Add(new LineSegment(
 					new Vector2(Random.Range(-area, area), Random.Range(-area, area)),
 					new Vector2(Random.Range(-area, area), Random.Range(-area, area))
