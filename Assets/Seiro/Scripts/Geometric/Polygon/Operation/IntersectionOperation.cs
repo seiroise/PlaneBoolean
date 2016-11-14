@@ -58,8 +58,8 @@ namespace Seiro.Scripts.Geometric.Polygon.Operation {
 			/// 他の辺との交点を求める
 			/// 交差しない場合はNaNを返す
 			/// </summary>
-			public bool GetIntersectionPoint(Edge other, ref Vector2 p) {
-				return segment.GetIntersectionPoint(other.segment, ref p);
+			public bool GetIntersectionPoint(Edge other, out Vector2 p) {
+				return segment.GetIntersectionPoint(other.segment, out p);
 			}
 
 			/// <summary>
@@ -68,7 +68,7 @@ namespace Seiro.Scripts.Geometric.Polygon.Operation {
 			/// </summary>
 			public float GetIntersectionX(Line line) {
 				Vector2 p = Vector2.zero;
-				return segment.GetIntersectionPoint(line, ref p) ? p.x : startPoint.x;
+				return segment.GetIntersectionPoint(line, out p) ? p.x : startPoint.x;
 			}
 
 			#endregion
@@ -197,7 +197,7 @@ namespace Seiro.Scripts.Geometric.Polygon.Operation {
 				Edge e1 = totalEdge[i];
 				Edge e2 = totalEdge[(i + 1) % totalSize];
 				Vector2 p = Vector2.zero;
-				if(e1.GetIntersectionPoint(e2, ref p)) {
+				if(e1.GetIntersectionPoint(e2, out p)) {
 					resultPoints.Add(p);
 				}
 			}
@@ -253,7 +253,7 @@ namespace Seiro.Scripts.Geometric.Polygon.Operation {
 				Edge e1 = totalEdge[i];
 				Edge e2 = totalEdge[(i + 1) % totalSize];
 				Vector2 p = Vector2.zero;
-				if(e1.GetIntersectionPoint(e2, ref p)) {
+				if(e1.GetIntersectionPoint(e2, out p)) {
 					resultPoints.Add(p);
 				}
 			}

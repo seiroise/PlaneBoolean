@@ -34,11 +34,11 @@ namespace Seiro.Scripts.Geometric.Diagram {
 		public ConvexPolygon Execute(Line line, Vector2 exsample) {
 			//lineと各境界線の交差を調べる
 			Vector2 p1 = Vector2.zero;
-			bool i1 = border1.GetIntersectionPoint(line, ref p1);
+			bool i1 = border1.GetIntersectionPoint(line, out p1);
 			Vector2 p2 = Vector2.zero;
-			bool i2 = border2.GetIntersectionPoint(line, ref p2);
+			bool i2 = border2.GetIntersectionPoint(line, out p2);
 			Vector2 p3 = Vector2.zero;
-			bool i3 = border3.GetIntersectionPoint(line, ref p3);
+			bool i3 = border3.GetIntersectionPoint(line, out p3);
 
 			List<Vector2> vertices = new List<Vector2>();
 			//lineが境界線1及び2と交差する場合

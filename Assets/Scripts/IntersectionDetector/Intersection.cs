@@ -22,7 +22,7 @@ namespace IntersectionDetector {
 
 		public Vector2 GetIntersectionPoint() {
 			Vector2 p = Vector2.zero;
-			seg1.GetIntersectionPoint(seg2, ref p);
+			seg1.GetIntersectionPoint(seg2, out p);
 			return p;
 		}
 

@@ -32,8 +32,10 @@ namespace Seiro.Scripts.Geometric {
 		/// 直線との交点を求める
 		/// </summary>
 		public bool GetIntersectionPoint(Line l, out Vector2 p) {
+			
 			float d = a * l.b - l.a * b;
-			if(d == 0.0) {
+			if(d == 0f) {
+				p = Vector2.zero;
 				return false;   //直線が並行の場合はfalseを返す
 			}
 			float x = (b * l.c - l.b * c) / d;
