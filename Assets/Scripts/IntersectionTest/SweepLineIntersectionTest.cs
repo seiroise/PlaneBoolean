@@ -17,13 +17,14 @@ namespace IntersectionTest {
 		public int sample = 100;
 		private PlaneSweepIntersectionDetector detector;
 		private ChainLineFactory lineFactory;
+		private List<Intersection> intersections;
 
 		#region UnityEvent
 
 		private void Start() {
 			this.detector = new PlaneSweepIntersectionDetector();
 			this.lineFactory = GetComponent<ChainLineFactory>();
-
+			this.intersections = new List<Intersection>();
 			Test();
 		}
 
@@ -47,7 +48,7 @@ namespace IntersectionTest {
 			}
 
 			//交差判定
-			List<Intersection> intersections = detector.Execute(segments);
+			//intersections = detector.Execute(segments);
 
 			//線分の描画
 			for(int i = 0; i < segments.Count; ++i) {

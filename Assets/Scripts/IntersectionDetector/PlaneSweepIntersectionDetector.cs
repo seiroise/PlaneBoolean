@@ -26,10 +26,10 @@ namespace IntersectionDetector {
 				//線分が水平な場合は左の端点を始点とする
 				if(s.p1.y > s.p2.y || (s.p1.y == s.p2.y && s.p1.x < s.p2.x)) {
 					eventQueue.Insert(new Event(Event.Type.SEGMENT_START, s.p1, s, null));
-					eventQueue.Insert(new Event(Event.Type.SEGMENT_START, s.p2, s, null));
+					eventQueue.Insert(new Event(Event.Type.SEGMENT_END, s.p2, s, null));
 				} else {
 					eventQueue.Insert(new Event(Event.Type.SEGMENT_START, s.p2, s, null));
-					eventQueue.Insert(new Event(Event.Type.SEGMENT_START, s.p1, s, null));
+					eventQueue.Insert(new Event(Event.Type.SEGMENT_END, s.p1, s, null));
 				}
 			}
 
