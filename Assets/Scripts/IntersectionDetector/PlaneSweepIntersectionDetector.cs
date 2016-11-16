@@ -40,9 +40,14 @@ namespace IntersectionDetector {
 			//今回の実装では同一の交点が複数回検出される可能性があるため、HashSetを使って重複を防ぐ
 			HashSet<Intersection> result = new HashSet<Intersection>();
 
-			Event e;
+			Debug.Log("Queue : " + eventQueue);
+
 			//キューから先頭のイベントを取り出す
-			while((e = eventQueue.PopSmallest()) != null) {
+			Event e;
+			while((e = eventQueue.PopTail()) != null) {
+				Debug.Log("[" + eventQueue.GetCount() + "] Event : " + e);
+
+				continue;
 				float sweepY = e.point.y;
 				switch(e.type) {
 				case Event.Type.SEGMENT_START:
@@ -52,8 +57,8 @@ namespace IntersectionDetector {
 					LineSegment newSegment = e.segment1;
 					status.Insert(newSegment);  //ステータスに線分を追加
 
-					LineSegment left = status.GetSmaller(newSegment);
-					LineSegment right = status.GetBigger(newSegment);
+					LineSegment left = status.GetPrev(newSegment);
+					LineSegment right = status.GetNext(newSegment);
 
 					//左隣の線分との交差を調べる
 					CheckIntersection(left, newSegment, sweepY, eventQueue);
@@ -68,8 +73,8 @@ namespace IntersectionDetector {
 					//交点を結果に追加
 					result.Add(new Intersection(left, right));
 
-					LineSegment moreLeft = status.GetSmaller(left);
-					LineSegment moreRight = status.GetSmaller(right);
+					LineSegment moreLeft = status.GetPrev(left);
+					LineSegment moreRight = status.GetPrev(right);
 
 					//ステータス中のleftとrightの位置を交換するためいったん削除する
 					status.Delete(left);
@@ -94,8 +99,8 @@ namespace IntersectionDetector {
 				case Event.Type.SEGMENT_END:
 					//終点イベントの場合
 					LineSegment endSegment = e.segment1;
-					left = status.GetSmaller(endSegment);
-					right = status.GetBigger(endSegment);
+					left = status.GetPrev(endSegment);
+					right = status.GetNext(endSegment);
 
 					//線分の削除によって新しく隣り合う2線分の交差を調べる
 					CheckIntersection(left, right, sweepY, eventQueue);

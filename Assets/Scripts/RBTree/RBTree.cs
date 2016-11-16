@@ -39,9 +39,11 @@ namespace Scripts.RBTree {
 			public K lmax;
 		}
 
-		private Node root;          //根
-		private Node smallest;      //最も小さいノード
-		private Node biggest;       //最も大きいノード
+		private Node root;	//根
+		private Node head;	//最も小さいノード
+		private Node tail;	//最も大きいノード
+
+		private int count;	//要素数
 
 		private IComparer<K> comparator;    //比較子
 
@@ -49,9 +51,11 @@ namespace Scripts.RBTree {
 
 		public RBTree() {
 			this.root = null;
-			this.smallest = null;
-			this.biggest = null;
+			this.head = null;
+			this.tail = null;
 			this.comparator = null;
+
+			this.count = 0;
 		}
 
 		public RBTree(IComparer<K> comparator) : this() {
@@ -91,38 +95,38 @@ namespace Scripts.RBTree {
 		}
 
 		/// <summary>
-		/// 最も小さい要素を取り出す。(同時に削除
+		/// 先頭の要素を取り出す。(同時に削除
 		/// </summary>
-		public K PopSmallest() {
-			if(smallest == null) return default(K);
-			K key = smallest.key;
-			Delete(smallest.key);
+		public K PopHead() {
+			if(head == null) return default(K);
+			K key = head.key;
+			Delete(head.key);
 			return key;
 		}
 
 		/// <summary>
-		/// 最も大きい要素を取り出す。(同時に削除
+		/// 末尾の要素を取り出す。(同時に削除
 		/// </summary>
-		public K PopBiggest() {
-			if(biggest == null) return default(K);
-			K key = biggest.key;
-			Delete(biggest.key);
+		public K PopTail() {
+			if(tail == null) return default(K);
+			K key = tail.key;
+			Delete(tail.key);
 			return key;
 		}
 
 		/// <summary>
-		/// 指定した要素よりも一つ小さい要素を取得する
+		/// 指定した要素よりも一つ前の要素を取得する
 		/// </summary>
-		public K GetSmaller(K key) {
+		public K GetPrev(K key) {
 			Node t = GetNode(key);
 			if(t == null || t.prev == null) return default(K);
 			return t.prev.key;
 		}
 
 		/// <summary>
-		/// 指定した要素よりも一つ大きい要素を取得する
+		/// 指定した要素よりも一つ後ろの要素を取得する
 		/// </summary>
-		public K GetBigger(K key) {
+		public K GetNext(K key) {
 			Node t = GetNode(key);
 			if(t == null || t.next == null) return default(K);
 			return t.next.key;
@@ -140,6 +144,13 @@ namespace Scripts.RBTree {
 		/// </summary>
 		public void Clear() {
 			root = null;
+		}
+
+		/// <summary>
+		/// 要素数を取得する
+		/// </summary>
+		public int GetCount() {
+			return count;
 		}
 
 		#endregion
@@ -293,13 +304,17 @@ namespace Scripts.RBTree {
 			//前後関係の構築
 			if(parent == null) {
 				//rootの場合
-				smallest = biggest = t;
+				head = tail = t;
 			} else {
 				//それ以外
-				if(!SetPrevAtInserted(t) && t != biggest) {
-					SetNextAtInserted(t);
+				if(!SetPrevAtInserted(t, parent) && t != tail) {
+					SetNextAtInserted(t, parent);
 				}
 			}
+
+			//要素数+1
+			++count;
+
 			return t;
 		}
 
@@ -307,10 +322,10 @@ namespace Scripts.RBTree {
 		/// 挿入するノードtに対してkeyが一つ前のノードnとの前後関係を設定する
 		/// 前後関係をnの次のノードn.nextとも構築した場合はtrueを返す
 		/// </summary>
-		private bool SetPrevAtInserted(Node t) {
+		private bool SetPrevAtInserted(Node t, Node parent) {
 
 			//親に遡って最初に見つけたノードtよりも小さいノード
-			Node n = t.parent;
+			Node n = parent;
 			int com;
 			while(n != null) {
 				com = comparator == null ? n.key.CompareTo(t.key) : comparator.Compare(n.key, t.key);
@@ -330,9 +345,10 @@ namespace Scripts.RBTree {
 					n = n.parent;
 				}
 			}
-
-			//最大ノード
-			biggest = t;
+			//末尾ノード
+			tail = t;
+			t.next = parent;
+			parent.prev = t;
 			return false;
 		}
 
@@ -340,10 +356,10 @@ namespace Scripts.RBTree {
 		/// 挿入するノードtに対してkeyが一つ次のノードnとの前後関係を設定する
 		/// 前後関係をnの前のノードn.prevとも構築した場合はtrueを返す
 		/// </summary>
-		private bool SetNextAtInserted(Node t) {
+		private bool SetNextAtInserted(Node t, Node parent) {
 
 			//親に遡って最初に見つけたノードtよりも大きいノード
-			Node n = t.parent;
+			Node n = parent;
 			int com;
 			while(n != null) {
 				com = comparator == null ? n.key.CompareTo(t.key) : comparator.Compare(n.key, t.key);
@@ -364,8 +380,10 @@ namespace Scripts.RBTree {
 				}
 			}
 
-			//最小ノード
-			smallest = t;
+			//先頭ノード
+			head = t;
+			t.prev = parent;
+			parent.next = t;
 			return false;
 		}
 
@@ -400,6 +418,9 @@ namespace Scripts.RBTree {
 					t.rst = Delete(t.rst, t, key, aux);
 					return BalanceR(t, aux);
 				} else {
+					//要素数-1
+					--count;
+
 					if(t.lst == null) {
 						//左端
 						switch(t.color) {
@@ -542,13 +563,14 @@ namespace Scripts.RBTree {
 			if(t.prev != null) {
 				t.prev.next = t.next;
 			} else {
-				smallest = t.next;
+				head = t.next;
 			}
 			if(t.next != null) {
 				t.next.prev = t.prev;
 			} else {
-				biggest = t.prev;
+				tail = t.prev;
 			}
+			t.prev = t.next = null;
 		}
 
 		#endregion
@@ -567,7 +589,7 @@ namespace Scripts.RBTree {
 			StringBuilder sb = new StringBuilder();
 			if(format.Equals("b")) {
 				//大きい順
-				Node t = biggest;
+				Node t = tail;
 				sb.Append(t.key);
 				t = t.prev;
 				while(t != null) {
@@ -577,7 +599,7 @@ namespace Scripts.RBTree {
 				}
 			} else if(format.Equals("s")) {
 				//小さい順
-				Node t = smallest;
+				Node t = head;
 				sb.Append(t.key);
 				t = t.next;
 				while(t != null) {
@@ -589,6 +611,26 @@ namespace Scripts.RBTree {
 
 			return sb.ToString();
 
+		}
+
+		#endregion
+
+		#region DebugFunction
+
+		/// <summary>
+		/// 最小のノードを取得する
+		/// </summary>
+		[Obsolete]
+		public Node GetSmallestNode() {
+			return head;
+		}
+
+		/// <summary>
+		/// 最大のノードを取得する
+		/// </summary>
+		[Obsolete]
+		public Node GetBiggestNode() {
+			return tail;
 		}
 
 		#endregion

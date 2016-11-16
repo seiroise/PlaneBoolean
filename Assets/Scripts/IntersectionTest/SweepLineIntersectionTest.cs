@@ -5,6 +5,7 @@ using Seiro.Scripts.Geometric;
 using IntersectionDetector;
 using Seiro.Scripts.Graphics.ChainLine;
 using Seiro.Scripts.Utility;
+using Scripts.RBTree;
 
 namespace IntersectionTest {
 
@@ -41,14 +42,15 @@ namespace IntersectionTest {
 			float area = 5f;
 
 			for(int i = 0; i < sample; ++i) {
-				segments.Add(new LineSegment(
-					new Vector2(Random.Range(-area, area), Random.Range(-area, area)),
-					new Vector2(Random.Range(-area, area), Random.Range(-area, area))
-				));
+				Vector2 p1, p2;
+				p1 = new Vector2(Random.Range(-area, area), Random.Range(-area, area));
+				p2 = new Vector2(Random.Range(-area, area), Random.Range(-area, area));
+				Debug.Log(p1 + " - " + p2);
+				segments.Add(new LineSegment(p1, p2));
 			}
 
 			//交差判定
-			//intersections = detector.Execute(segments);
+			intersections = detector.Execute(segments);
 
 			//線分の描画
 			for(int i = 0; i < segments.Count; ++i) {
