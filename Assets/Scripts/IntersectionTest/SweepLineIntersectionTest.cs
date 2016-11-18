@@ -32,12 +32,17 @@ namespace IntersectionTest {
 			for (int i = 0; i < 5; ++i) {
 				tree.Insert(i);
 			}
+
+			var n1 = tree.GetNode(4);
+			var n2 = tree.GetTailNode();
+			Debug.Log((n1 == n2) + " : T/F");
+
 			Debug.Log(tree.PopTail());
 			Debug.Log(tree.PopTail());
-			Debug.Log(tree.ToString("b"));
-			Debug.Log(tree.ToString("s"));
-			Debug.Log(tree.PopTail());
-			Debug.Log(tree.PopTail());
+			n1 = tree.GetNode(2);
+			n2 = tree.GetTailNode();
+			Debug.Log((n1 == n2) + " : T/F");
+
 			Debug.Log(tree.PopTail());
 			//Test();
 		}

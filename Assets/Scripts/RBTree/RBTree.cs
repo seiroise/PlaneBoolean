@@ -48,11 +48,11 @@ namespace Scripts.RBTree {
 			public K lmax;
 		}
 
-		private Node root;	//根
-		private Node head;	//最も小さいノード
-		private Node tail;	//最も大きいノード
+		private Node root;  //根
+		private Node head;  //最も小さいノード
+		private Node tail;  //最も大きいノード
 
-		private int count;	//要素数
+		private int count;  //要素数
 
 		private IComparer<K> comparator;    //比較子
 
@@ -119,6 +119,7 @@ namespace Scripts.RBTree {
 		public K PopTail() {
 			if(tail == null) return default(K);
 			K key = tail.key;
+			Debug.Log(tail);
 			Delete(tail.key);
 			return key;
 		}
@@ -320,12 +321,12 @@ namespace Scripts.RBTree {
 		/// </summary>
 		private void SetPrevNextAtInserted(Node t, Node parent) {
 			int com = comparator == null ? t.key.CompareTo(parent.key) : comparator.Compare(t.key, parent.key);
-			if (com < 0) {
+			if(com < 0) {
 				//left
 				Node prev = parent.prev;
 				t.next = parent;
 				parent.prev = t;
-				if (prev == null) {
+				if(prev == null) {
 					//先頭
 					head = t;
 				} else {
@@ -337,7 +338,7 @@ namespace Scripts.RBTree {
 				Node next = parent.next;
 				t.prev = parent;
 				parent.next = t;
-				if (next == null) {
+				if(next == null) {
 					//末尾
 					tail = t;
 				} else {
@@ -376,7 +377,7 @@ namespace Scripts.RBTree {
 				} else if(com > 0) {
 					//右(大きい方)に進む
 					t.rst = Delete(t.rst, t, key, aux);
-					return BalanceR(t, aux);
+					return BalanceR(t, aux);;
 				} else {
 					//要素数-1
 					--count;
@@ -393,18 +394,15 @@ namespace Scripts.RBTree {
 							break;
 						}
 						//前後関係
-						Debug.Log("左端");
 						SetPrevNextAtDeleted(t);
 						//右部分木を昇格する
 						return t.rst;
 					} else {
 						//前後関係の設定
+						SetPrevNextAtDeleted(t);
 						//左部分木の最大値で置き換える
 						t.lst = DeleteMax(t.lst, aux);
 						t.key = aux.lmax;
-
-						Debug.Log("左端以外");
-						SetPrevNextAtDeleted(t);
 						return BalanceL(t, aux);
 					}
 				}
@@ -517,24 +515,16 @@ namespace Scripts.RBTree {
 			//前後関係
 			Node prev = t.prev;
 			Node next = t.next;
-
-			Debug.LogError("----");
-			Debug.Log(t);
-			Debug.Log(prev + ":::" + next);
-			if (prev != null) {
+			if(prev != null) {
 				prev.next = next;
 			} else {
 				head = next;
 			}
-
-			if (next != null) {
+			if(next != null) {
 				next.prev = prev;
 			} else {
 				tail = prev;
 			}
-			Debug.Log(prev + "::" + next);
-			Debug.Log(head + "[]" + tail);
-
 			t.prev = t.next = null;
 		}
 
