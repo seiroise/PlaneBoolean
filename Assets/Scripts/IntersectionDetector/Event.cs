@@ -44,5 +44,15 @@ namespace IntersectionDetector {
 			}
 			return com;
 		}
+
+		public override string ToString() {
+			StringBuilder sb = new StringBuilder();
+			sb.Append("(");
+			sb.Append(point.x);
+			sb.Append(" , ");
+			sb.Append(point.y);
+			sb.Append(")");
+			return sb.ToString();
+		}
 	}
 }

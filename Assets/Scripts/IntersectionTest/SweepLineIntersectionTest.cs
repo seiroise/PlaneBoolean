@@ -26,7 +26,20 @@ namespace IntersectionTest {
 			this.detector = new PlaneSweepIntersectionDetector();
 			this.lineFactory = GetComponent<ChainLineFactory>();
 			this.intersections = new List<Intersection>();
-			Test();
+
+
+			RBTree<int> tree = new RBTree<int>();
+			for (int i = 0; i < 5; ++i) {
+				tree.Insert(i);
+			}
+			Debug.Log(tree.PopTail());
+			Debug.Log(tree.PopTail());
+			Debug.Log(tree.ToString("b"));
+			Debug.Log(tree.ToString("s"));
+			Debug.Log(tree.PopTail());
+			Debug.Log(tree.PopTail());
+			Debug.Log(tree.PopTail());
+			//Test();
 		}
 
 		#endregion

@@ -19,15 +19,24 @@ namespace Scripts.RBTree {
 			public K key;
 			public Node lst = null;     //左部分木
 			public Node rst = null;     //右部分木
-			public Node parent = null;  //親
 
 			public Node prev = null;    //一つ小さい値のkeyを持つNode
 			public Node next = null;    //一つ大きい値のkeyを持つNode
 
-			public Node(RBColor color, K key, Node parent) {
+			public Node(RBColor color, K key) {
 				this.color = color;
 				this.key = key;
-				this.parent = parent;
+			}
+
+			public override string ToString() {
+				StringBuilder sb = new StringBuilder();
+
+				sb.Append(prev != null ? prev.key.ToString() : "null");
+				sb.Append("<-");
+				sb.Append(key);
+				sb.Append("->");
+				sb.Append(next != null ? next.key.ToString() : "null");
+				return sb.ToString();
 			}
 		}
 
@@ -181,11 +190,6 @@ namespace Scripts.RBTree {
 			u.lst = v;
 			v.rst = t;
 
-			//親子関係
-			u.parent = v.parent;
-			v.parent = u;
-			if(t != null) t.parent = v;
-
 			return u;
 		}
 
@@ -198,11 +202,6 @@ namespace Scripts.RBTree {
 			Node v = u.lst, t = v.rst;
 			v.rst = u;
 			u.lst = t;
-
-			//親子関係
-			v.parent = u.parent;
-			u.parent = v;
-			if(t != null) t.parent = u;
 
 			return v;
 		}
@@ -299,7 +298,7 @@ namespace Scripts.RBTree {
 		/// 新しくエントリーのノードを作成する
 		/// </summary>
 		private Node CreateNode(K key, Node parent) {
-			Node t = new Node(RBColor.R, key, parent);
+			Node t = new Node(RBColor.R, key);
 
 			//前後関係の構築
 			if(parent == null) {
@@ -307,9 +306,7 @@ namespace Scripts.RBTree {
 				head = tail = t;
 			} else {
 				//それ以外
-				if(!SetPrevAtInserted(t, parent) && t != tail) {
-					SetNextAtInserted(t, parent);
-				}
+				SetPrevNextAtInserted(t, parent);
 			}
 
 			//要素数+1
@@ -319,72 +316,35 @@ namespace Scripts.RBTree {
 		}
 
 		/// <summary>
-		/// 挿入するノードtに対してkeyが一つ前のノードnとの前後関係を設定する
-		/// 前後関係をnの次のノードn.nextとも構築した場合はtrueを返す
+		/// ノードtの前後関係を構築する
 		/// </summary>
-		private bool SetPrevAtInserted(Node t, Node parent) {
-
-			//親に遡って最初に見つけたノードtよりも小さいノード
-			Node n = parent;
-			int com;
-			while(n != null) {
-				com = comparator == null ? n.key.CompareTo(t.key) : comparator.Compare(n.key, t.key);
-				if(com < 0) {
-					//前後関係の構築
-					t.prev = n;
-					if(n.next != null) {
-						n.next.prev = t;
-						t.next = n.next;
-						n.next = t;
-						return true;
-					} else {
-						n.next = t;
-						break;
-					}
+		private void SetPrevNextAtInserted(Node t, Node parent) {
+			int com = comparator == null ? t.key.CompareTo(parent.key) : comparator.Compare(t.key, parent.key);
+			if (com < 0) {
+				//left
+				Node prev = parent.prev;
+				t.next = parent;
+				parent.prev = t;
+				if (prev == null) {
+					//先頭
+					head = t;
 				} else {
-					n = n.parent;
+					t.prev = prev;
+					prev.next = t;
+				}
+			} else {
+				//right
+				Node next = parent.next;
+				t.prev = parent;
+				parent.next = t;
+				if (next == null) {
+					//末尾
+					tail = t;
+				} else {
+					t.next = next;
+					next.prev = t;
 				}
 			}
-			//末尾ノード
-			tail = t;
-			t.next = parent;
-			parent.prev = t;
-			return false;
-		}
-
-		/// <summary>
-		/// 挿入するノードtに対してkeyが一つ次のノードnとの前後関係を設定する
-		/// 前後関係をnの前のノードn.prevとも構築した場合はtrueを返す
-		/// </summary>
-		private bool SetNextAtInserted(Node t, Node parent) {
-
-			//親に遡って最初に見つけたノードtよりも大きいノード
-			Node n = parent;
-			int com;
-			while(n != null) {
-				com = comparator == null ? n.key.CompareTo(t.key) : comparator.Compare(n.key, t.key);
-				if(com > 0) {
-					//前後関係の構築
-					t.next = n;
-					if(n.prev != null) {
-						n.prev.next = t;
-						t.prev = n.prev;
-						n.prev = t;
-						return true;
-					} else {
-						n.prev = t;
-						break;
-					}
-				} else {
-					n = n.parent;
-				}
-			}
-
-			//先頭ノード
-			head = t;
-			t.prev = parent;
-			parent.next = t;
-			return false;
 		}
 
 		#endregion
@@ -409,11 +369,11 @@ namespace Scripts.RBTree {
 				return null;
 			} else {
 				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
-				if(key.CompareTo(t.key) < com) {
+				if(com < 0) {
 					//左(小さい方)に進む
 					t.lst = Delete(t.lst, t, key, aux);
 					return BalanceL(t, aux);
-				} else if(key.CompareTo(t.key) > com) {
+				} else if(com > 0) {
 					//右(大きい方)に進む
 					t.rst = Delete(t.rst, t, key, aux);
 					return BalanceR(t, aux);
@@ -432,20 +392,19 @@ namespace Scripts.RBTree {
 							aux.change = true;
 							break;
 						}
-						//親子関係
-						if(t.rst != null) {
-							t.rst.parent = t.parent;
-						}
 						//前後関係
+						Debug.Log("左端");
 						SetPrevNextAtDeleted(t);
 						//右部分木を昇格する
 						return t.rst;
 					} else {
 						//前後関係の設定
-						SetPrevNextAtDeleted(t);
 						//左部分木の最大値で置き換える
 						t.lst = DeleteMax(t.lst, aux);
 						t.key = aux.lmax;
+
+						Debug.Log("左端以外");
+						SetPrevNextAtDeleted(t);
 						return BalanceL(t, aux);
 					}
 				}
@@ -468,10 +427,6 @@ namespace Scripts.RBTree {
 					//パス上の黒の数が変わるので修正フラグを立てる
 					aux.change = true;
 					break;
-				}
-				//親子関係
-				if(t.lst != null) {
-					t.lst.parent = t.parent;
 				}
 				//左部分木を昇格させる
 				return t.lst;
@@ -560,16 +515,26 @@ namespace Scripts.RBTree {
 		/// </summary>
 		private void SetPrevNextAtDeleted(Node t) {
 			//前後関係
-			if(t.prev != null) {
-				t.prev.next = t.next;
+			Node prev = t.prev;
+			Node next = t.next;
+
+			Debug.LogError("----");
+			Debug.Log(t);
+			Debug.Log(prev + ":::" + next);
+			if (prev != null) {
+				prev.next = next;
 			} else {
-				head = t.next;
+				head = next;
 			}
-			if(t.next != null) {
-				t.next.prev = t.prev;
+
+			if (next != null) {
+				next.prev = prev;
 			} else {
-				tail = t.prev;
+				tail = prev;
 			}
+			Debug.Log(prev + "::" + next);
+			Debug.Log(head + "[]" + tail);
+
 			t.prev = t.next = null;
 		}
 
@@ -618,18 +583,26 @@ namespace Scripts.RBTree {
 		#region DebugFunction
 
 		/// <summary>
-		/// 最小のノードを取得する
+		/// ルートのノードを取得する
 		/// </summary>
 		[Obsolete]
-		public Node GetSmallestNode() {
+		public Node GetRootNode() {
+			return root;
+		}
+
+		/// <summary>
+		/// 先頭のノードを取得する
+		/// </summary>
+		[Obsolete]
+		public Node GetHeadNode() {
 			return head;
 		}
 
 		/// <summary>
-		/// 最大のノードを取得する
+		/// 末尾のノードを取得する
 		/// </summary>
 		[Obsolete]
-		public Node GetBiggestNode() {
+		public Node GetTailNode() {
 			return tail;
 		}
 

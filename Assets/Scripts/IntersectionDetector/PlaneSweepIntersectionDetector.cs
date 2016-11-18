@@ -46,7 +46,7 @@ namespace IntersectionDetector {
 			Event e;
 			while((e = eventQueue.PopTail()) != null) {
 				Debug.Log("[" + eventQueue.GetCount() + "] Event : " + e);
-
+				//Debug.Log("Queue : " + eventQueue.ToString("b"));
 				continue;
 				float sweepY = e.point.y;
 				switch(e.type) {
