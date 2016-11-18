@@ -40,7 +40,14 @@ namespace IntersectionDetector {
 			//今回の実装では同一の交点が複数回検出される可能性があるため、HashSetを使って重複を防ぐ
 			HashSet<Intersection> result = new HashSet<Intersection>();
 
-			Debug.Log("Queue : " + eventQueue);
+			var n = eventQueue.GetTailNode();
+			for(int i = 0; i < 10; ++i) {
+				if(n == null) break;
+				Debug.Log("n : " + n.key.point);
+				n = n.prev;
+			}
+
+			//return new List<Intersection>();
 
 			//キューから先頭のイベントを取り出す
 			Event e;
