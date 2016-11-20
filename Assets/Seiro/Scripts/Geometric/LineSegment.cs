@@ -9,14 +9,26 @@ namespace Seiro.Scripts.Geometric {
 	/// 二次元線分
 	/// </summary>
 	public class LineSegment : IComparable<LineSegment> {
-		public Vector2 p1;
-		public Vector2 p2;
+		
+		public readonly Vector2 p1;
+		public readonly Vector2 p2;
+
+		public readonly float top;
+		public readonly float bottom;
 
 		#region Constructors
 
 		public LineSegment(Vector2 p1, Vector2 p2) {
 			this.p1 = p1;
 			this.p2 = p2;
+
+			if (p1.y < p2.y) {
+				top = p2.y;
+				bottom = p1.y;
+			} else {
+				top = p1.y;
+				bottom = p2.y;
+			}
 		}
 
 		public LineSegment(float x1, float y1, float x2, float y2)

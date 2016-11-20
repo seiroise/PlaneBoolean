@@ -9,7 +9,7 @@ namespace Scripts.RBTree {
 	/// <summary>
 	/// 赤黒木
 	/// </summary>
-	public class RBTree<K> where K : IComparable<K> {
+	public class RBTree<K> : ICollection<K> where K : IComparable<K> {
 
 		/// <summary>
 		/// 赤黒ノード
@@ -67,7 +67,8 @@ namespace Scripts.RBTree {
 			this.count = 0;
 		}
 
-		public RBTree(IComparer<K> comparator) : this() {
+		public RBTree(IComparer<K> comparator)
+			: this() {
 			this.comparator = comparator;
 		}
 
@@ -78,36 +79,23 @@ namespace Scripts.RBTree {
 		/// <summary>
 		/// keyの包含確認
 		/// </summary>
+		[Obsolete]
 		public bool ContainsKey(K key) {
 			Node t = root;
-			while(t != null) {
+			while (t != null) {
 				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
-				if(com < 0) t = t.lst;
-				else if(com > 0) t = t.rst;
+				if (com < 0) t = t.lst;
+				else if (com > 0) t = t.rst;
 				else return true;
 			}
 			return false;
 		}
 
 		/// <summary>
-		/// keyに対応するNodeの取得
-		/// </summary>
-		public Node GetNode(K key) {
-			Node t = root;
-			while(t != null) {
-				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
-				if(com < 0) t = t.lst;
-				else if(com > 0) t = t.rst;
-				else return t;
-			}
-			return null;
-		}
-
-		/// <summary>
 		/// 先頭の要素を取り出す。(同時に削除
 		/// </summary>
 		public K PopHead() {
-			if(head == null) return default(K);
+			if (head == null) return default(K);
 			K key = head.key;
 			Delete(head.key);
 			return key;
@@ -117,9 +105,8 @@ namespace Scripts.RBTree {
 		/// 末尾の要素を取り出す。(同時に削除
 		/// </summary>
 		public K PopTail() {
-			if(tail == null) return default(K);
+			if (tail == null) return default(K);
 			K key = tail.key;
-			Debug.Log(tail);
 			Delete(tail.key);
 			return key;
 		}
@@ -129,7 +116,7 @@ namespace Scripts.RBTree {
 		/// </summary>
 		public K GetPrev(K key) {
 			Node t = GetNode(key);
-			if(t == null || t.prev == null) return default(K);
+			if (t == null || t.prev == null) return default(K);
 			return t.prev.key;
 		}
 
@@ -138,7 +125,7 @@ namespace Scripts.RBTree {
 		/// </summary>
 		public K GetNext(K key) {
 			Node t = GetNode(key);
-			if(t == null || t.next == null) return default(K);
+			if (t == null || t.next == null) return default(K);
 			return t.next.key;
 		}
 
@@ -150,15 +137,9 @@ namespace Scripts.RBTree {
 		}
 
 		/// <summary>
-		/// 空にする
-		/// </summary>
-		public void Clear() {
-			root = null;
-		}
-
-		/// <summary>
 		/// 要素数を取得する
 		/// </summary>
+		[Obsolete]
 		public int GetCount() {
 			return count;
 		}
@@ -230,6 +211,7 @@ namespace Scripts.RBTree {
 		/// <summary>
 		/// エントリーの挿入
 		/// </summary>
+		[Obsolete]
 		public void Insert(K key) {
 			root = Insert(root, null, key);
 			root.color = RBColor.B;
@@ -239,16 +221,16 @@ namespace Scripts.RBTree {
 		/// 再帰的なエントリーの挿入操作
 		/// </summary>
 		private Node Insert(Node t, Node parent, K key) {
-			if(t == null) {
+			if (t == null) {
 				//nullなら赤ノードを返す
 				return CreateNode(key, parent);
 			} else {
 				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
-				if(com < 0) {
+				if (com < 0) {
 					//左(小さい方)に進む
 					t.lst = Insert(t.lst, t, key);
 					return Balance(t);
-				} else if(com > 0) {
+				} else if (com > 0) {
 					//右(大きい方)に進む
 					t.rst = Insert(t.rst, t, key);
 					return Balance(t);
@@ -263,29 +245,29 @@ namespace Scripts.RBTree {
 		/// エントリー挿入に伴う赤黒木の修正(4パターン
 		/// </summary>
 		private Node Balance(Node t) {
-			if(t.color != RBColor.B) {
+			if (t.color != RBColor.B) {
 				return t;
 			}
-			if(IsR(t.lst)) {
-				if(IsR(t.lst.lst)) {
+			if (IsR(t.lst)) {
+				if (IsR(t.lst.lst)) {
 					//左の子と左左の孫が赤ノード
 					t = RotateR(t);
 					t.lst.color = RBColor.B;
 					return t;
-				} else if(IsR(t.lst.rst)) {
+				} else if (IsR(t.lst.rst)) {
 					//左の子と左右の孫が赤ノード
 					t = RotateLR(t);
 					t.lst.color = RBColor.B;
 					return t;
 				}
 			}
-			if(IsR(t.rst)) {
-				if(IsR(t.rst.lst)) {
+			if (IsR(t.rst)) {
+				if (IsR(t.rst.lst)) {
 					//右の子と右左の孫が赤ノード
 					t = RotateRL(t);
 					t.rst.color = RBColor.B;
 					return t;
-				} else if(IsR(t.rst.rst)) {
+				} else if (IsR(t.rst.rst)) {
 					//右の子と右右の孫が赤ノード
 					t = RotateL(t);
 					t.rst.color = RBColor.B;
@@ -302,7 +284,7 @@ namespace Scripts.RBTree {
 			Node t = new Node(RBColor.R, key);
 
 			//前後関係の構築
-			if(parent == null) {
+			if (parent == null) {
 				//rootの場合
 				head = tail = t;
 			} else {
@@ -321,12 +303,12 @@ namespace Scripts.RBTree {
 		/// </summary>
 		private void SetPrevNextAtInserted(Node t, Node parent) {
 			int com = comparator == null ? t.key.CompareTo(parent.key) : comparator.Compare(t.key, parent.key);
-			if(com < 0) {
+			if (com < 0) {
 				//left
 				Node prev = parent.prev;
 				t.next = parent;
 				parent.prev = t;
-				if(prev == null) {
+				if (prev == null) {
 					//先頭
 					head = t;
 				} else {
@@ -338,7 +320,7 @@ namespace Scripts.RBTree {
 				Node next = parent.next;
 				t.prev = parent;
 				parent.next = t;
-				if(next == null) {
+				if (next == null) {
 					//末尾
 					tail = t;
 				} else {
@@ -355,51 +337,53 @@ namespace Scripts.RBTree {
 		/// <summary>
 		/// keyのエントリーの削除
 		/// </summary>
+		[Obsolete]
 		public void Delete(K key) {
-			if(root == null) return;
+			if (root == null) return;
 			root = Delete(root, null, key, new Trio());
-			if(root != null) root.color = RBColor.B;
+			if (root != null) root.color = RBColor.B;
 		}
 
 		/// <summary>
 		/// 再帰的なkeyのエントリーの削除操作
 		/// </summary>
 		private Node Delete(Node t, Node parent, K key, Trio aux) {
-			if(t == null) {
+			if (t == null) {
 				aux.change = false;
 				return null;
 			} else {
 				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
-				if(com < 0) {
+				if (com < 0) {
 					//左(小さい方)に進む
 					t.lst = Delete(t.lst, t, key, aux);
 					return BalanceL(t, aux);
-				} else if(com > 0) {
+				} else if (com > 0) {
 					//右(大きい方)に進む
 					t.rst = Delete(t.rst, t, key, aux);
-					return BalanceR(t, aux);;
+					return BalanceR(t, aux); ;
 				} else {
 					//要素数-1
 					--count;
-
-					if(t.lst == null) {
+					if (t.lst == null) {
+						Debug.Log("左端");
 						//左端
-						switch(t.color) {
-						case RBColor.R:
-							aux.change = false;
-							break;
-						case RBColor.B:
-							//パス上の黒の数が変わるので修正フラグを立てる
-							aux.change = true;
-							break;
+						switch (t.color) {
+							case RBColor.R:
+								aux.change = false;
+								break;
+							case RBColor.B:
+								//パス上の黒の数が変わるので修正フラグを立てる
+								aux.change = true;
+								break;
 						}
 						//前後関係
 						SetPrevNextAtDeleted(t);
 						//右部分木を昇格する
 						return t.rst;
 					} else {
-						//前後関係の設定
-						SetPrevNextAtDeleted(t);
+						Debug.Log("左端以外");
+						//前後関係の設定(ノード的には左部分木の最大を削除するのでt.lstを指定)
+						SetPrevNextAtDeleted(t.lst);
 						//左部分木の最大値で置き換える
 						t.lst = DeleteMax(t.lst, aux);
 						t.key = aux.lmax;
@@ -414,17 +398,17 @@ namespace Scripts.RBTree {
 		/// 戻り値は削除により修正された左部分木
 		/// </summary>
 		private Node DeleteMax(Node t, Trio aux) {
-			if(t.rst == null) {
+			if (t.rst == null) {
 				//最大値
 				aux.lmax = t.key;
-				switch(t.color) {
-				case RBColor.R:
-					aux.change = false;
-					break;
-				case RBColor.B:
-					//パス上の黒の数が変わるので修正フラグを立てる
-					aux.change = true;
-					break;
+				switch (t.color) {
+					case RBColor.R:
+						aux.change = false;
+						break;
+					case RBColor.B:
+						//パス上の黒の数が変わるので修正フラグを立てる
+						aux.change = true;
+						break;
 				}
 				//左部分木を昇格させる
 				return t.lst;
@@ -440,26 +424,26 @@ namespace Scripts.RBTree {
 		/// 戻り値は修正された木。auxに付加情報を返す
 		/// </summary>
 		private Node BalanceL(Node t, Trio aux) {
-			if(!aux.change) {
+			if (!aux.change) {
 				return t;
-			} else if(IsB(t.rst) && IsR(t.rst.lst)) {
+			} else if (IsB(t.rst) && IsR(t.rst.lst)) {
 				RBColor rb = t.color;
 				t = RotateRL(t);
 				t.color = rb;
 				t.lst.color = RBColor.B;    //左側に黒が追加されて修正
 				aux.change = false;
-			} else if(IsB(t.rst) && IsR(t.rst.rst)) {
+			} else if (IsB(t.rst) && IsR(t.rst.rst)) {
 				RBColor rb = t.color;
 				t = RotateL(t);
 				t.color = rb;
 				t.lst.color = t.rst.color = RBColor.B;  //左側に黒が追加されて修正
 				aux.change = false;
-			} else if(IsB(t.rst)) {
+			} else if (IsB(t.rst)) {
 				RBColor rb = t.color;
 				t.color = RBColor.B;
 				t.rst.color = RBColor.R;
 				aux.change = rb == RBColor.B;   //tが黒の場合は黒が減るので修正フラグを立て木を遡る(親で何とかする
-			} else if(IsR(t.rst)) {
+			} else if (IsR(t.rst)) {
 				t = RotateL(t);
 				t.color = RBColor.B;
 				t.lst.color = RBColor.R;
@@ -477,26 +461,26 @@ namespace Scripts.RBTree {
 		/// </summary>
 		private Node BalanceR(Node t, Trio aux) {
 			//BalanceLと左右対称
-			if(!aux.change) {
+			if (!aux.change) {
 				return t;
-			} else if(IsB(t.lst) && IsR(t.lst.rst)) {
+			} else if (IsB(t.lst) && IsR(t.lst.rst)) {
 				RBColor rb = t.color;
 				t = RotateLR(t);
 				t.color = rb;
 				t.rst.color = RBColor.B;
 				aux.change = false;
-			} else if(IsB(t.lst) && IsR(t.lst.lst)) {
+			} else if (IsB(t.lst) && IsR(t.lst.lst)) {
 				RBColor rb = t.color;
 				t = RotateR(t);
 				t.color = rb;
 				t.lst.color = t.rst.color = RBColor.B;
 				aux.change = false;
-			} else if(IsB(t.lst)) {
+			} else if (IsB(t.lst)) {
 				RBColor rb = t.color;
 				t.color = RBColor.B;
 				t.lst.color = RBColor.R;
 				aux.change = rb == RBColor.B;
-			} else if(IsR(t.lst)) {
+			} else if (IsR(t.lst)) {
 				t = RotateR(t);
 				t.color = RBColor.B;
 				t.rst.color = RBColor.R;
@@ -515,12 +499,12 @@ namespace Scripts.RBTree {
 			//前後関係
 			Node prev = t.prev;
 			Node next = t.next;
-			if(prev != null) {
+			if (prev != null) {
 				prev.next = next;
 			} else {
 				head = next;
 			}
-			if(next != null) {
+			if (next != null) {
 				next.prev = prev;
 			} else {
 				tail = prev;
@@ -539,25 +523,25 @@ namespace Scripts.RBTree {
 		public string ToString(string format) {
 
 			//空
-			if(IsEmpty()) return "Empty Tree";
+			if (IsEmpty()) return "Empty Tree";
 
 			StringBuilder sb = new StringBuilder();
-			if(format.Equals("b")) {
+			if (format.Equals("b")) {
 				//大きい順
 				Node t = tail;
 				sb.Append(t.key);
 				t = t.prev;
-				while(t != null) {
+				while (t != null) {
 					sb.Append(" -> ");
 					sb.Append(t.key);
 					t = t.prev;
 				}
-			} else if(format.Equals("s")) {
+			} else if (format.Equals("s")) {
 				//小さい順
 				Node t = head;
 				sb.Append(t.key);
 				t = t.next;
-				while(t != null) {
+				while (t != null) {
 					sb.Append(" -> ");
 					sb.Append(t.key);
 					t = t.next;
@@ -594,6 +578,120 @@ namespace Scripts.RBTree {
 		[Obsolete]
 		public Node GetTailNode() {
 			return tail;
+		}
+
+		/// <summary>
+		/// keyに対応するNodeの取得
+		/// </summary>
+		[Obsolete]
+		public Node GetNode(K key) {
+			Node t = root;
+			while (t != null) {
+				int com = comparator == null ? key.CompareTo(t.key) : comparator.Compare(key, t.key);
+				if (com < 0) t = t.lst;
+				else if (com > 0) t = t.rst;
+				else return t;
+			}
+			return null;
+		}
+
+		#endregion
+
+		#region ICollection
+
+		public void Add(K item) {
+			Insert(item);
+		}
+
+		public void Clear() {
+			root = null;
+		}
+
+		public bool Contains(K item) {
+			return ContainsKey(item);
+		}
+
+		public void CopyTo(K[] array, int arrayIndex) {
+			if (array == null) {
+				throw new ArgumentNullException();
+			}
+			if (arrayIndex < 0) {
+				throw new ArgumentOutOfRangeException();
+			}
+			if (array.Length - arrayIndex > count) {
+				throw new ArgumentException();
+			}
+			Node t = head;
+			for (int i = 0, j = arrayIndex; i < count; ++i, ++j) {
+				array[j] = t.key;
+				t = t.next;
+			}
+		}
+
+		public int Count {
+			get { return GetCount(); }
+		}
+
+		public bool IsReadOnly {
+			get { return false; }
+		}
+
+		public bool Remove(K item) {
+			if (!Contains(item)) return false;
+			Delete(item);
+			return true;
+		}
+
+		public IEnumerator<K> GetEnumerator() {
+			return new RBTreeEnumerator<K>(this);
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+			return new RBTreeEnumerator<K>(this);
+		}
+
+		#endregion
+	}
+
+	/// <summary>
+	/// RBTreeの列挙子
+	/// </summary>
+	public class RBTreeEnumerator<K> : IEnumerator<K> where K : IComparable<K> {
+
+		private RBTree<K> rbTree;
+		private RBTree<K>.Node currentNode;
+		private RBTree<K>.Node tail;
+
+		public RBTreeEnumerator(RBTree<K> rbTree) {
+			this.rbTree = rbTree;
+			this.tail = rbTree.GetTailNode();
+		}
+
+		#region IEnumerator
+
+		public K Current {
+			get { return currentNode.key; }
+		}
+
+		public void Dispose() {
+		}
+
+		object System.Collections.IEnumerator.Current {
+			get { return currentNode.key; }
+		}
+
+		public bool MoveNext() {
+			if (currentNode == tail) return false;
+			if (currentNode == null) {
+				Reset();
+			} else {
+				currentNode = currentNode.next;
+			}
+			return currentNode != null;
+		}
+
+		public void Reset() {
+			currentNode = rbTree.GetHeadNode();
 		}
 
 		#endregion

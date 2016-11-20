@@ -16,9 +16,14 @@ namespace IntersectionTest {
 	public class SweepLineIntersectionTest : MonoBehaviour {
 
 		public int sample = 100;
+		public float area = 10f;
 		private PlaneSweepIntersectionDetector detector;
 		private ChainLineFactory lineFactory;
 		private List<Intersection> intersections;
+
+		private ChainLine sweepLine;
+		private List<ChainLine> statusLine;
+		private List<ChainLine> intersectionLine;
 
 		#region UnityEvent
 
@@ -27,24 +32,9 @@ namespace IntersectionTest {
 			this.lineFactory = GetComponent<ChainLineFactory>();
 			this.intersections = new List<Intersection>();
 
+			statusLine = new List<ChainLine>();
 
-			RBTree<int> tree = new RBTree<int>();
-			for (int i = 0; i < 5; ++i) {
-				tree.Insert(i);
-			}
-
-			var n1 = tree.GetNode(4);
-			var n2 = tree.GetTailNode();
-			Debug.Log((n1 == n2) + " : T/F");
-
-			Debug.Log(tree.PopTail());
-			Debug.Log(tree.PopTail());
-			n1 = tree.GetNode(2);
-			n2 = tree.GetTailNode();
-			Debug.Log((n1 == n2) + " : T/F");
-
-			Debug.Log(tree.PopTail());
-			//Test();
+			Test();
 		}
 
 		#endregion
@@ -57,38 +47,61 @@ namespace IntersectionTest {
 		private void Test() {
 
 			List<LineSegment> segments = new List<LineSegment>();
-			float area = 5f;
 
 			for(int i = 0; i < sample; ++i) {
 				Vector2 p1, p2;
 				p1 = new Vector2(Random.Range(-area, area), Random.Range(-area, area));
 				p2 = new Vector2(Random.Range(-area, area), Random.Range(-area, area));
-				Debug.Log(p1 + " - " + p2);
 				segments.Add(new LineSegment(p1, p2));
-			}
 
-			//交差判定
-			intersections = detector.Execute(segments);
-
-			//線分の描画
-			for(int i = 0; i < segments.Count; ++i) {
 				List<Vector3> vertices = new List<Vector3>();
-				vertices.Add(segments[i].p1);
-				vertices.Add(segments[i].p2);
+				vertices.Add(p1);
+				vertices.Add(p2);
 				lineFactory.CreateLine(vertices, Color.blue);
 			}
 
-			//交点の描画
-			for(int i = 0; i < intersections.Count; ++i) {
-				List<Vector3> vertices = new List<Vector3>();
-				Vector3 p = intersections[i].GetIntersectionPoint();
-				vertices.Add(p + Vector3.up * 0.1f);
-				vertices.Add(p + Vector3.left * 0.1f);
-				vertices.Add(p + Vector3.down * 0.1f);
-				vertices.Add(p + Vector3.right * 0.1f);
-				vertices.Add(p + Vector3.up * 0.1f);
-				lineFactory.CreateLine(vertices, Color.red);
+			//交差判定
+			StartCoroutine(detector.CoDebug(segments, PopEvent, Status, AddIntersection));
+		}
+
+		#endregion
+
+		#region Callback
+
+		private void PopEvent(IntersectionDetector.Event e) {
+			lineFactory.DeleteLine(sweepLine);
+
+			List<Vector3> vertices = new List<Vector3>();
+			vertices.Add(new Vector3(-area, e.point.y));
+			vertices.Add(new Vector3(area, e.point.y));
+
+			sweepLine = lineFactory.CreateLine(vertices, Color.red);
+		}
+
+		private void Status(RBTree<LineSegment> status) {
+			foreach (var e in statusLine) {
+				lineFactory.DeleteLine(e);
 			}
+			statusLine = new List<ChainLine>();
+
+			Debug.Log(status.Count + ": " + status);
+			foreach (var l in status) {
+				Debug.Log(l);
+				List<Vector3> vertices = new List<Vector3>();
+				vertices.Add(l.p1);
+				vertices.Add(l.p2);
+				statusLine.Add(lineFactory.CreateLine(vertices, Color.yellow));
+			}
+		}
+
+		private void AddIntersection(Vector2 point) {
+			List<Vector3> vertices = new List<Vector3>();
+			vertices.Add(point + Vector2.right);
+			vertices.Add(point + Vector2.down);
+			vertices.Add(point + Vector2.left);
+			vertices.Add(point + Vector2.up);
+			vertices.Add(point + Vector2.right);
+			lineFactory.CreateLine(vertices, Color.magenta);
 		}
 
 		#endregion
