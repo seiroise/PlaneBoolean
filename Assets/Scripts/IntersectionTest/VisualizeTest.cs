@@ -1,26 +1,27 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using System.Collections;
-using Seiro.Scripts.Geometric;
-using IntersectionDetector;
+﻿using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Seiro.Scripts.Graphics.ChainLine;
-using Seiro.Scripts.Utility;
+using IntersectionDetector;
+using Seiro.Scripts.Geometric;
 using Scripts.RBTree;
 
 namespace IntersectionTest {
 
 	/// <summary>
-	/// 走査線ベースの交差判定のテスト
+	/// 走査線ベースのこさ判定の可視化
 	/// </summary>
 	[RequireComponent(typeof(ChainLineFactory))]
-	public class SweepLineIntersectionTest : MonoBehaviour {
+	public class VisualizeTest : MonoBehaviour {
 
 		public int sample = 100;
 		public float area = 10f;
 		[Range(0.01f, 10f)]
 		public float markerSize = 1f;
-		public Color segmentColor;
 		public Color intersectionColor;
+		public Color segmentColor;
+		public Color activeColor;
 
 		private PlaneSweepIntersectionDetector planeSweep;
 		private BruteForceIntersectionDetector bruteForce;
@@ -30,6 +31,7 @@ namespace IntersectionTest {
 		private ChainLine sweepLine;
 		private List<ChainLine> statusLine;
 		private List<ChainLine> intersectionLine;
+
 
 		#region UnityEvent
 
@@ -62,33 +64,10 @@ namespace IntersectionTest {
 				segments.Add(new LineSegment(p1, p2));
 			}
 
-			//交差判定
-			List<Intersection> intersections;
-
-			//総当り
-			var sw = System.Diagnostics.Stopwatch.StartNew();
-			intersections = bruteForce.Execute(segments);
-			sw.Stop();
-			Debug.Log("Bruteforce");
-			Debug.Log("Elapsed : " + sw.ElapsedMilliseconds);
-			Debug.Log("交点数 : " + intersections.Count);
-			//描画
-			DrawSegments(segments, Vector2.right * area);
-			DrawIntersections(intersections, Vector2.right * area);
-
-			//平面走査
-			sw.Reset(); sw.Start();
-			intersections = planeSweep.Execute(segments);
-			sw.Stop();
-			Debug.Log("Planesweep");
-			Debug.Log("Elapsed : " + sw.ElapsedMilliseconds);
-			Debug.Log("交点数 : " + intersections.Count);
-			//描画
-			DrawSegments(segments, Vector2.left * area);
-			DrawIntersections(intersections, Vector2.left * area);
+			DrawSegments(segments, Vector2.zero);
 
 			//デバッグ用
-			//StartCoroutine(detector.CoDebug(segments, PopEvent, Status, AddIntersection));
+			StartCoroutine(planeSweep.CoDebug(segments, PopEvent, Status, AddIntersection));
 		}
 
 		/// <summary>
@@ -100,16 +79,6 @@ namespace IntersectionTest {
 				vertices.Add(e.p1 + offset);
 				vertices.Add(e.p2 + offset);
 				lineFactory.CreateLine(vertices, segmentColor);
-			}
-		}
-
-		/// <summary>
-		/// 交点の描画
-		/// </summary>
-		private void DrawIntersections(List<Intersection> intersections, Vector2 offset) {
-			foreach (var e in intersections) {
-				Vector2 p = e.GetIntersectionPoint() + offset;
-				DrawIntersection(p);
 			}
 		}
 
@@ -146,13 +115,12 @@ namespace IntersectionTest {
 			}
 			statusLine = new List<ChainLine>();
 
-			//Debug.Log(status.Count + ": " + status);
 			foreach (var l in status) {
 				Debug.Log(l);
 				List<Vector3> vertices = new List<Vector3>();
 				vertices.Add(l.p1);
 				vertices.Add(l.p2);
-				statusLine.Add(lineFactory.CreateLine(vertices, Color.yellow));
+				statusLine.Add(lineFactory.CreateLine(vertices, activeColor));
 			}
 		}
 

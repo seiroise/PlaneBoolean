@@ -45,7 +45,8 @@ namespace Scripts.RBTree {
 		/// </summary>
 		private class Trio {
 			public bool change = false;
-			public K lmax;
+			public K lmax;		//左部分木の最大値
+			public Node node;	//左部分木の最大値ノード
 		}
 
 		private Node root;  //根
@@ -365,7 +366,6 @@ namespace Scripts.RBTree {
 					//要素数-1
 					--count;
 					if (t.lst == null) {
-						Debug.Log("左端");
 						//左端
 						switch (t.color) {
 							case RBColor.R:
@@ -381,12 +381,11 @@ namespace Scripts.RBTree {
 						//右部分木を昇格する
 						return t.rst;
 					} else {
-						Debug.Log("左端以外");
-						//前後関係の設定(ノード的には左部分木の最大を削除するのでt.lstを指定)
-						SetPrevNextAtDeleted(t.lst);
 						//左部分木の最大値で置き換える
 						t.lst = DeleteMax(t.lst, aux);
 						t.key = aux.lmax;
+						//前後関係の設定(左部分木の削除したノード)
+						SetPrevNextAtDeleted(aux.node);
 						return BalanceL(t, aux);
 					}
 				}
@@ -401,6 +400,7 @@ namespace Scripts.RBTree {
 			if (t.rst == null) {
 				//最大値
 				aux.lmax = t.key;
+				aux.node = t;
 				switch (t.color) {
 					case RBColor.R:
 						aux.change = false;
