@@ -21,6 +21,7 @@ namespace IntersectionTest {
 		public float markerSize = 1f;
 		public Color segmentColor;
 		public Color intersectionColor;
+		public bool draw = true;
 
 		private PlaneSweepIntersectionDetector planeSweep;
 		private BruteForceIntersectionDetector bruteForce;
@@ -55,7 +56,7 @@ namespace IntersectionTest {
 
 			List<LineSegment> segments = new List<LineSegment>();
 
-			for (int i = 0; i < sample; ++i) {
+			for(int i = 0; i < sample; ++i) {
 				Vector2 p1, p2;
 				p1 = new Vector2(Random.Range(-area, area), Random.Range(-area, area));
 				p2 = new Vector2(Random.Range(-area, area), Random.Range(-area, area));
@@ -73,19 +74,24 @@ namespace IntersectionTest {
 			Debug.Log("Elapsed : " + sw.ElapsedMilliseconds);
 			Debug.Log("交点数 : " + intersections.Count);
 			//描画
-			DrawSegments(segments, Vector2.right * area);
-			DrawIntersections(intersections, Vector2.right * area);
+			if(draw) {
+				DrawSegments(segments, Vector2.right * area);
+				DrawIntersections(intersections, Vector2.right * area);
+			}
 
 			//平面走査
 			sw.Reset(); sw.Start();
-			intersections = planeSweep.Execute(segments);
+			List<Vector2> vertices = planeSweep.Execute1(segments);
+			//intersections = planeSweep.Execute(segments);
 			sw.Stop();
 			Debug.Log("Planesweep");
 			Debug.Log("Elapsed : " + sw.ElapsedMilliseconds);
-			Debug.Log("交点数 : " + intersections.Count);
+			Debug.Log("交点数 : " + vertices.Count);
 			//描画
-			DrawSegments(segments, Vector2.left * area);
-			DrawIntersections(intersections, Vector2.left * area);
+			if(draw) {
+				DrawSegments(segments, Vector2.left * area);
+				DrawIntersections(intersections, Vector2.left * area);
+			}
 
 			//デバッグ用
 			//StartCoroutine(detector.CoDebug(segments, PopEvent, Status, AddIntersection));
@@ -95,7 +101,7 @@ namespace IntersectionTest {
 		/// 線分の描画
 		/// </summary>
 		private void DrawSegments(List<LineSegment> segments, Vector2 offset) {
-			foreach (var e in segments) {
+			foreach(var e in segments) {
 				List<Vector3> vertices = new List<Vector3>();
 				vertices.Add(e.p1 + offset);
 				vertices.Add(e.p2 + offset);
@@ -107,7 +113,7 @@ namespace IntersectionTest {
 		/// 交点の描画
 		/// </summary>
 		private void DrawIntersections(List<Intersection> intersections, Vector2 offset) {
-			foreach (var e in intersections) {
+			foreach(var e in intersections) {
 				Vector2 p = e.GetIntersectionPoint() + offset;
 				DrawIntersection(p);
 			}
@@ -141,13 +147,13 @@ namespace IntersectionTest {
 		}
 
 		private void Status(RBTree<LineSegment> status) {
-			foreach (var e in statusLine) {
+			foreach(var e in statusLine) {
 				lineFactory.DeleteLine(e);
 			}
 			statusLine = new List<ChainLine>();
 
 			//Debug.Log(status.Count + ": " + status);
-			foreach (var l in status) {
+			foreach(var l in status) {
 				Debug.Log(l);
 				List<Vector3> vertices = new List<Vector3>();
 				vertices.Add(l.p1);
